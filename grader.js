@@ -57,9 +57,9 @@ var checkHtmlFile = function(htmlfile, checksfile) {
 };
 
 var checkURL = function(URL, checksfile) {
+	var out = {};
 
 	rest.get(URL).on('complete', function(result) {
-	    var out = {};
 		
 		if (result instanceof Error) {
 
