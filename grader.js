@@ -56,32 +56,47 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
-var checkURL = function(URL, checksfile) {
-	var out = {};
-
+var getHtmlFromURL = function(URL, checksfile) {
+	var out;
 	rest.get(URL).on('complete', function(result) {
-		
 		if (result instanceof Error) {
-
 			out = "Error reading the URL" + result;
-			
-  			//console.log("Error reading the URL %s. Exiting.", result);
-        	//process.exit(1); // http://nodejs.org/api/process.html#process_process_exit_code
-
   		} else {
-    		$ = result;
+	  		console.log("inside rest get url");
 
-		    var checks = loadChecks(checksfile).sort();
-		    for(var ii in checks) {
-		        var present = $(checks[ii]).length > 0;
-		        out[checks[ii]] = present;
-		    }	
+			out = processHtmlFile(result, checksfile);
   		}
+    var outJson = JSON.stringify(out, null, 4);
+
+  	console.log(outJson);
+  	
+  	fs.writeFile('output.json', outJson, function (err) {
+	  	if (err) throw err;
+  		console.log('It\'s saved!');
 	});
-	
-    return out;
-	
+
+//  	console.log("return form getHtmlFile", out);
+  	return out;
+}
+)
 };
+
+
+var processHtmlFile = function(Htmlfile, checksfile) {
+	var out = {};
+	$ = cheerio.load(Htmlfile);
+
+//	console.log("inside processHtmlFile, ", $.html());
+
+	var checks = loadChecks(checksfile).sort();
+	for(var ii in checks) {
+		var present = $(checks[ii]).length > 0;
+		out[checks[ii]] = present;
+	}	
+
+//	console.log("exiting processHtmlFile, out = %s ", JSON.stringify(out, null, 4));
+	return out;
+} ;
 
 var clone = function(fn) {
     // Workaround for commander.js issue.
@@ -97,10 +112,15 @@ if(require.main == module) {
         .parse(process.argv);
         
     if (program.url)    
-	    var checkJson = checkURL(program.url, program.checks);
+    {
+    	var checkJson = getHtmlFromURL(program.url, program.checks)
+//	    var checkJson = checkURL(program.url, program.checks);
+		console.log("URL is passed");
+	}
 	else
+	{
 		var checkJson = checkHtmlFile(program.file, program.checks);
-		
+	}	
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
 } else {
